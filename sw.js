@@ -1,4 +1,4 @@
-const CACHE_NAME = 'wm-v2-cache-v1';
+const CACHE_NAME = 'wm-v2-cache-v3';
 const ASSETS = [
   './',
   './index.html',
@@ -10,6 +10,10 @@ const ASSETS = [
   './js/production.js',
   './js/teams.js',
   './js/clients.js',
+  './js/ne3clients.js',
+  './js/ne4citas.js',
+  './js/gfp-citas.js',
+  './js/hub.js',
   './js/certification.js',
   './js/settings.js',
   './js/i18n.js',
@@ -31,8 +35,13 @@ self.addEventListener('activate', e => {
   self.clients.claim();
 });
 
+// Network-first: always try fresh, fall back to cache
 self.addEventListener('fetch', e => {
   e.respondWith(
-    caches.match(e.request).then(r => r || fetch(e.request))
+    fetch(e.request).then(r => {
+      const clone = r.clone();
+      caches.open(CACHE_NAME).then(c => c.put(e.request, clone));
+      return r;
+    }).catch(() => caches.match(e.request))
   );
 });
