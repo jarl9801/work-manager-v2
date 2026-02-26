@@ -84,23 +84,8 @@
             ]);
             const data = await respJson.json();
 
-            // Merge assignments from Apps Script into citas.json data
-            let assignMap = {};
-            if (respScript) {
-                try {
-                    const scriptData = await respScript.json();
-                    (scriptData.citas || []).forEach(c => { assignMap[c.id] = c; });
-                } catch(e) { console.warn('Apps Script merge failed:', e); }
-            }
-            // Apply assignment data (equipo, status, linkDocs) from Apps Script
-            (data.citas || []).forEach(c => {
-                const a = assignMap[c.id];
-                if (a) {
-                    if (a.equipo) c.equipo = a.equipo;
-                    if (a.status && a.status !== 'libre') c.status = a.status;
-                    if (a.linkDocs) c.linkDocs = a.linkDocs;
-                }
-            });
+            // citas.json already includes assignment data (merged by sync cron)
+            // No extra fetch needed — data is ready to use
 
             const today = new Date().toISOString().split('T')[0];
             allCitasData = (data.citas || []).filter(c => c.fecha >= today && !STATUS_DONE.includes(c.status));
