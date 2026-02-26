@@ -554,6 +554,34 @@ tbody tr:last-child td { border-bottom: none; }
 }
 @keyframes citaSpin { to { transform: rotate(360deg); } }
 
+/* GFP Citas — Insyte status badges */
+.badge-gfp { font-size: 11px; padding: 3px 8px; border-radius: 6px; font-weight: 600; }
+.gfp-capturada    { background: var(--blue-dim); color: var(--blue); }
+.gfp-encamino     { background: var(--orange-dim); color: var(--orange); }
+.gfp-entrabajo    { background: rgba(191, 90, 242, 0.15); color: var(--purple); }
+.gfp-ausente      { background: rgba(255, 214, 10, 0.15); color: var(--yellow); }
+.gfp-previos      { background: rgba(100, 210, 255, 0.12); color: var(--cyan); }
+.gfp-recitar      { background: var(--orange-dim); color: var(--orange); }
+.gfp-paralizada   { background: var(--red-dim); color: var(--red); }
+.gfp-ok           { background: var(--green-dim); color: var(--green); }
+.gfp-preinstalada { background: rgba(106, 196, 220, 0.15); color: var(--teal); }
+.gfp-nook         { background: var(--red-dim); color: var(--red); }
+.gfp-appoin       { background: rgba(72, 72, 74, 0.3); color: var(--text-secondary); }
+.gfp-approve      { background: rgba(255, 69, 58, 0.1); color: var(--red); }
+
+.gfp-insyte-1  { border-left: 3px solid var(--blue); }
+.gfp-insyte-2  { border-left: 3px solid var(--orange); }
+.gfp-insyte-3  { border-left: 3px solid var(--purple); }
+.gfp-insyte-4  { border-left: 3px solid var(--yellow); }
+.gfp-insyte-5  { border-left: 3px solid var(--cyan); }
+.gfp-insyte-6  { border-left: 3px solid var(--orange); }
+.gfp-insyte-7  { border-left: 3px solid var(--red); }
+.gfp-insyte-8  { border-left: 3px solid var(--green); }
+.gfp-insyte-9  { border-left: 3px solid var(--teal); }
+.gfp-insyte-10 { border-left: 3px solid var(--red); }
+
+.kpi-value.purple { color: var(--purple); }
+
 /* Team citas section */
 .team-citas-section { margin-top: 12px; padding-top: 10px; border-top: 0.5px solid var(--separator); }
 .team-cita-mini {

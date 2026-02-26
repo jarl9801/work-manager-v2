@@ -86,6 +86,14 @@ window.render_dashboard = async function() {
             }).join('')}
         </div>
 
+        <div id="dashGfpStats" class="kpi-grid" style="margin-top:24px;display:none;">
+            <div class="kpi-card">
+                <div class="kpi-label">📋 Citas GFP (Umtelkomd)</div>
+                <div class="kpi-value teal" id="dashGfpTotal">—</div>
+                <div class="kpi-sub" id="dashGfpWeek">Esta semana: —</div>
+            </div>
+        </div>
+
         ${records.length === 0 ? `
         <div class="empty-state" style="margin-top: 40px">
             <div class="icon">📊</div>
@@ -93,4 +101,14 @@ window.render_dashboard = async function() {
             <div class="desc">Ve a Producción para agregar registros semanales</div>
         </div>` : ''}
     `;
+
+    // Try loading GFP stats in background
+    try {
+        const stats = window.getGfpCitasStats && window.getGfpCitasStats();
+        if (stats) {
+            document.getElementById('dashGfpStats').style.display = '';
+            document.getElementById('dashGfpTotal').textContent = stats.total;
+            document.getElementById('dashGfpWeek').textContent = 'Esta semana: ' + stats.thisWeek;
+        }
+    } catch(e) {}
 };
