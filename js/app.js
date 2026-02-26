@@ -27,6 +27,7 @@
         production: 'Producción',
         teams: 'Equipos',
         ne3clients: 'Clientes NE3',
+        ne4citas: 'Citas NE4',
         clients: 'Clientes NE4',
         certification: 'Certificación',
         settings: 'Ajustes'

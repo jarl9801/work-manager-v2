@@ -18,10 +18,10 @@ const PROJECT_SEED = {
         { code: 'EHR', name: 'Ehrenkirchen', clientId: 'VAN', operatorId: 'UGG', lines: ['NE4'], status: 'active' }
     ],
     teams: [
-        { id: 'WEST-001', name: 'West-001', members: ['Carlos M.', 'Diego R.', 'Felipe S.'] },
-        { id: 'WEST-002', name: 'West-002', members: ['Andrés L.', 'Jorge P.', 'Manuel T.'] },
-        { id: 'WEST-003', name: 'West-003', members: ['Ricardo G.', 'Pablo V.'] },
-        { id: 'WEST-004', name: 'West-004', members: ['Oscar H.', 'Luis C.'] },
-        { id: 'PLUS-001', name: 'Plus-001', members: ['Mario D.', 'Sergio A.', 'Tomás B.'] }
+        { id: 'WEST-001', name: 'West-001', pin: '2345', client: 'westconnect', members: ['Alejandro Herrera', 'Alexander Herrera'] },
+        { id: 'WEST-002', name: 'West-002', pin: '3456', client: 'westconnect', members: ['Juan Correa', 'Eddier Aldana'] },
+        { id: 'WEST-003', name: 'West-003', pin: '4567', client: 'westconnect', members: ['Jaime Guzman'] },
+        { id: 'WEST-004', name: 'West-004', pin: '5678', client: 'westconnect', members: ['Michel Matos'] },
+        { id: 'PLUS-001', name: 'Plus-001', pin: '1234', client: 'glasfaser-plus', members: ['Erick Flores'] }
     ]
 };

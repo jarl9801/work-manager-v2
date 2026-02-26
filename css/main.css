@@ -497,3 +497,68 @@ tbody tr:last-child td { border-bottom: none; }
     .kpi-grid { grid-template-columns: 1fr; }
     .kpi-value { font-size: 24px; }
 }
+
+/* ===== NE4 CITAS ===== */
+.cita-card {
+    background: var(--bg-card);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 18px;
+    margin-bottom: 12px;
+    box-shadow: var(--shadow-sm);
+    transition: all var(--transition);
+}
+.cita-card:hover { border-color: var(--border-light); }
+
+.cita-status-libre     { border-left: 3px solid var(--text-tertiary); }
+.cita-status-asignada  { border-left: 3px solid var(--blue); }
+.cita-status-capturada { border-left: 3px solid var(--orange); }
+.cita-status-en_trabajo { border-left: 3px solid var(--purple); }
+.cita-status-finalizada_ok { border-left: 3px solid var(--green); opacity: 0.55; }
+.cita-status-finalizada_no_ok { border-left: 3px solid var(--red); opacity: 0.55; }
+.cita-status-cliente_ausente { border-left: 3px solid var(--yellow); opacity: 0.55; }
+.cita-status-recitar   { border-left: 3px solid var(--orange); opacity: 0.55; }
+.cita-status-paralizada { border-left: 3px solid var(--red); opacity: 0.55; }
+
+.badge-cita-libre     { background: rgba(72, 72, 74, 0.3); color: var(--text-secondary); }
+.badge-cita-asignada  { background: var(--blue-dim); color: var(--blue); }
+.badge-cita-capturada { background: var(--orange-dim); color: var(--orange); }
+.badge-cita-en_trabajo { background: rgba(191, 90, 242, 0.15); color: var(--purple); }
+.badge-cita-finalizada_ok { background: var(--green-dim); color: var(--green); }
+.badge-cita-finalizada_no_ok { background: var(--red-dim); color: var(--red); }
+.badge-cita-cliente_ausente { background: rgba(255, 214, 10, 0.15); color: var(--yellow); }
+.badge-cita-recitar   { background: var(--orange-dim); color: var(--orange); }
+.badge-cita-paralizada { background: var(--red-dim); color: var(--red); }
+.badge-cita-done      { background: rgba(72, 72, 74, 0.2); color: var(--text-tertiary); }
+
+.cita-date-header {
+    font-size: 13px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.8px; color: var(--blue);
+    border-bottom: 0.5px solid var(--separator);
+    padding-bottom: 8px; margin-bottom: 12px;
+}
+
+.cita-assign-row {
+    display: flex; gap: 8px; align-items: center;
+    margin-top: 12px; flex-wrap: wrap;
+}
+
+.cita-spinner {
+    width: 20px; height: 20px;
+    border: 2px solid var(--border);
+    border-top-color: var(--blue);
+    border-radius: 50%;
+    animation: citaSpin 0.7s linear infinite;
+}
+@keyframes citaSpin { to { transform: rotate(360deg); } }
+
+/* Team citas section */
+.team-citas-section { margin-top: 12px; padding-top: 10px; border-top: 0.5px solid var(--separator); }
+.team-cita-mini {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 6px 10px; margin-top: 4px;
+    background: var(--bg-tertiary); border-radius: var(--radius-sm);
+    font-size: 12px;
+}

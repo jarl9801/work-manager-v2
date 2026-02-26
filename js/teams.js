@@ -20,6 +20,15 @@ window.render_teams = async function() {
         const weekMeters = weekRecords.filter(r => r.line === 'NE3').reduce((s, r) => s + (r.meters || 0), 0);
         const weekWEs = weekRecords.filter(r => r.line === 'NE4').reduce((s, r) => s + (r.wes || 0), 0);
 
+        // Today's citas for this team
+        const todayCitas = window.getNe4CitasForTeam ? window.getNe4CitasForTeam(t.name) : [];
+        const citasHTML = todayCitas.length > 0
+            ? `<div class="team-citas-section">
+                <div style="font-size:11px;font-weight:600;color:var(--text-secondary);margin-bottom:4px;">📅 Citas de hoy (${todayCitas.length})</div>
+                ${todayCitas.map(c => `<div class="team-cita-mini"><span>${c.ha || '—'} · ${c.inicio}–${c.fin}</span><span class="badge badge-cita-${c.status}" style="font-size:10px;padding:2px 8px;">${c.status}</span></div>`).join('')}
+               </div>`
+            : '';
+
         return `
         <div class="team-card">
             <div style="display:flex;justify-content:space-between;align-items:flex-start">
@@ -37,6 +46,7 @@ window.render_teams = async function() {
                 <div><div class="project-stat-label">WEs esta semana</div><div class="project-stat-value" style="font-size:16px">${weekWEs}</div></div>
                 <div><div class="project-stat-label">Total registros</div><div class="project-stat-value" style="font-size:16px">${teamRecords.length}</div></div>
             </div>
+            ${citasHTML}
         </div>`;
     }).join('');
 
