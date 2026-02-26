@@ -1,7 +1,7 @@
 // GFP Citas — Glasfaser Plus (Insyte imasm) appointment management
 (function() {
     const API_BASE = 'https://api-imasm.insytedeutschland.de';
-    const CREDENTIALS = { usuario: 'UMTELKOMD', clave: 'UMTELKOMD_4376' };
+    const CREDENTIALS = { usuario: 'UMTELKOMD', password: 'UMTELKOMD_4376' };
 
     // Token management
     let authToken = null;
@@ -65,7 +65,7 @@
             });
             const data = await resp.json();
             authToken = data.token.access_token;
-            tokenExpiry = new Date(data.token.valid_until).getTime();
+            tokenExpiry = data.token.valid_until * 1000; // Unix seconds → ms
             return authToken;
         } catch (err) {
             authToken = null;
