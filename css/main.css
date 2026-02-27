@@ -2112,3 +2112,322 @@ tbody tr:last-child td { border-bottom: none; }
 .nexus-animate-in {
     animation: nexus-slide-up 0.5s var(--nx-ease) forwards;
 }
+/* ============================================
+   NEXUS OS v3.2 — Light Theme + Widgets + Toasts
+   ============================================ */
+
+/* --- Light Theme Variables --- */
+:root[data-theme="light"] {
+    --nx-bg: #fafafa;
+    --nx-bg-elevated: #ffffff;
+    --nx-bg-card: #f5f5f5;
+    --nx-bg-hover: #eeeeee;
+    --nx-border: rgba(0,0,0,0.08);
+    --nx-border-strong: rgba(0,0,0,0.15);
+    --nx-text: #18181b;
+    --nx-text-secondary: #71717a;
+    --nx-text-tertiary: #a1a1aa;
+}
+
+/* --- Theme Toggle --- */
+.nexus-theme-toggle {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--nx-bg-card);
+    border: 1px solid var(--nx-border);
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 16px;
+    transition: all 0.2s;
+}
+
+.nexus-theme-toggle:hover {
+    transform: scale(1.1);
+    border-color: var(--nx-border-strong);
+}
+
+/* --- Live Widgets Grid --- */
+.nexus-live-widgets {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+@media (max-width: 768px) {
+    .nexus-live-widgets {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* --- Widget Base --- */
+.nexus-widget {
+    background: var(--nx-bg-elevated);
+    border: 1px solid var(--nx-border);
+    border-radius: var(--nx-radius);
+    overflow: hidden;
+    transition: all 0.3s var(--nx-ease);
+}
+
+.nexus-widget:hover {
+    border-color: var(--nx-border-strong);
+    box-shadow: var(--nx-shadow);
+}
+
+.nexus-widget-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--nx-border);
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--nx-text-secondary);
+}
+
+.nexus-widget-live {
+    color: #22c55e;
+    font-size: 10px;
+    animation: nexus-pulse-text 2s infinite;
+}
+
+@keyframes nexus-pulse-text {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+}
+
+.nexus-widget-content {
+    padding: 18px;
+}
+
+/* Stats Widget */
+.nexus-widget-stats .nexus-widget-content {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+}
+
+.nexus-widget-stat {
+    text-align: center;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: var(--nx-radius-sm);
+    transition: all 0.2s;
+}
+
+.nexus-widget-stat:hover {
+    background: var(--nx-bg-card);
+}
+
+.nexus-widget-value {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--nx-text);
+    line-height: 1;
+    margin-bottom: 6px;
+}
+
+.nexus-widget-label {
+    font-size: 11px;
+    color: var(--nx-text-secondary);
+    font-weight: 500;
+}
+
+/* Quick Widget */
+.nexus-widget-buttons {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+}
+
+.nexus-widget-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    background: var(--nx-bg-card);
+    border: 1px solid var(--nx-border);
+    border-radius: var(--nx-radius-sm);
+    color: var(--nx-text);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.nexus-widget-btn:hover {
+    background: var(--nx-bg-hover);
+    border-color: var(--nx-border-strong);
+    transform: translateY(-1px);
+}
+
+.nexus-widget-btn span {
+    font-size: 18px;
+}
+
+/* Recent Widget */
+.nexus-recent-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px;
+    border-radius: var(--nx-radius-sm);
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.nexus-recent-item:hover {
+    background: var(--nx-bg-card);
+}
+
+.nexus-recent-icon {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    font-size: 16px;
+}
+
+.nexus-recent-gradient { background: linear-gradient(135deg, var(--nx-accent), var(--nx-purple)); }
+.nexus-recent-green { background: rgba(34,197,94,0.15); }
+.nexus-recent-orange { background: rgba(249,115,22,0.15); }
+.nexus-recent-blue { background: rgba(59,130,246,0.15); }
+.nexus-recent-purple { background: rgba(168,85,247,0.15); }
+.nexus-recent-teal { background: rgba(20,184,166,0.15); }
+
+.nexus-recent-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--nx-text);
+}
+
+/* --- Weather Widget Enhanced --- */
+.nexus-weather {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    background: var(--nx-bg-card);
+    border: 1px solid var(--nx-border);
+    border-radius: 20px;
+    font-size: 13px;
+    color: var(--nx-text);
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.nexus-weather:hover {
+    border-color: var(--nx-border-strong);
+}
+
+.nexus-weather-icon {
+    font-size: 20px;
+}
+
+.nexus-weather-temp {
+    font-weight: 600;
+}
+
+.nexus-weather-location {
+    color: var(--nx-text-tertiary);
+    font-size: 11px;
+    border-left: 1px solid var(--nx-border);
+    padding-left: 8px;
+    margin-left: 4px;
+}
+
+.nexus-weather-loading {
+    opacity: 0.7;
+}
+
+.nexus-spinner {
+    width: 14px;
+    height: 14px;
+    border: 2px solid var(--nx-border);
+    border-top-color: var(--nx-accent);
+    border-radius: 50%;
+    animation: nexus-spin 1s linear infinite;
+}
+
+@keyframes nexus-spin {
+    to { transform: rotate(360deg); }
+}
+
+/* --- Toast Notifications --- */
+.nexus-toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    padding: 14px 20px;
+    background: var(--nx-text);
+    color: var(--nx-bg);
+    border-radius: var(--nx-radius);
+    font-size: 14px;
+    font-weight: 500;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    transform: translateY(100px);
+    opacity: 0;
+    transition: all 0.3s var(--nx-ease);
+    z-index: 9999;
+}
+
+.nexus-toast-show {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+/* --- Light Mode Specific Adjustments --- */
+.nexus-light .nexus-logo {
+    box-shadow: 0 4px 20px rgba(59,130,246,0.2);
+}
+
+.nexus-light .nexus-app-card:hover,
+.nexus-light .nexus-widget:hover {
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+}
+
+.nexus-light .nexus-palette-content {
+    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.15);
+}
+
+.nexus-light .nexus-toast {
+    box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+}
+
+/* --- View Toggle Animation --- */
+.nexus-app-grid,
+.nexus-app-list {
+    animation: nexus-fade-in 0.4s var(--nx-ease);
+}
+
+@keyframes nexus-fade-in {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* --- Responsive Improvements --- */
+@media (max-width: 640px) {
+    .nexus-widget-stats .nexus-widget-content {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+    
+    .nexus-widget-stat {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        text-align: left;
+    }
+    
+    .nexus-widget-value {
+        margin-bottom: 0;
+    }
+}

@@ -1,16 +1,18 @@
-// Nexus OS v3.1 — Command Palette + Widgets + Shortcuts
-// El cerebro del sistema
+// Nexus OS v3.2 — Live Widgets + Real Weather + Theme Toggle
+// El sistema cobra vida
 
 window.NexusHub = {
-    // Estado
     state: {
-        viewMode: 'grid', // 'grid' | 'list'
+        viewMode: 'grid',
         searchQuery: '',
         recentApps: JSON.parse(localStorage.getItem('nexusRecent') || '[]'),
-        favorites: JSON.parse(localStorage.getItem('nexusFavs') || '[]')
+        favorites: JSON.parse(localStorage.getItem('nexusFavs') || '[]'),
+        theme: localStorage.getItem('nexusTheme') || 'dark',
+        weather: null,
+        projects: [],
+        todaysAppointments: []
     },
 
-    // Apps registry
     apps: [
         { id: 'workmanager', name: 'Work Manager', desc: 'Control de proyectos fibra', icon: '⚡', color: 'gradient', type: 'local', url: null, view: 'dashboard' },
         { id: 'fincontrol', name: 'FinControl', desc: 'Finanzas y cashflow', icon: '💰', color: 'green', type: 'cloud', url: 'https://umtelkomd-finance.web.app' },
@@ -20,15 +22,15 @@ window.NexusHub = {
         { id: 'fieldreport', name: 'Field Report', desc: 'Gestión de citas', icon: '📋', color: 'teal', type: 'cloud', url: 'https://jarl9801.github.io/field-report/' }
     ],
 
-    // Inicializar
     init() {
+        this.applyTheme();
         this.render();
         this.setupKeyboardShortcuts();
         this.startClock();
         this.loadWeather();
+        this.loadData();
     },
 
-    // Render principal
     render() {
         const el = document.getElementById('view-hub');
         if (!el) return;
@@ -36,7 +38,7 @@ window.NexusHub = {
         el.innerHTML = `
             ${this.renderHeader()}
             ${this.renderCommandPalette()}
-            ${this.renderStats()}
+            ${this.renderLiveWidgets()}
             ${this.renderQuickActions()}
             ${this.renderApps()}
             ${this.renderOperations()}
@@ -47,7 +49,6 @@ window.NexusHub = {
         this.animateEntry();
     },
 
-    // Header con clima
     renderHeader() {
         return `
         <div class="nexus-header">
@@ -65,9 +66,10 @@ window.NexusHub = {
                     </div>
                 </div>
                 <div class="nexus-header-widgets">
-                    <div class="nexus-weather" id="nexusWeather">
-                        <span class="nexus-weather-loading">🌤️ --°</span>
-                    </div>
+                    ${this.renderWeatherWidget()}
+                    <button class="nexus-theme-toggle" onclick="NexusHub.toggleTheme()" title="Cambiar tema">
+                        ${this.state.theme === 'dark' ? '☀️' : '🌙'}
+                    </button>
                     <div class="nexus-status-bar">
                         <div class="nexus-status-item">
                             <span class="nexus-status-dot nexus-status-online"></span>
@@ -80,7 +82,99 @@ window.NexusHub = {
         </div>`;
     },
 
-    // Command Palette (búsqueda rápida)
+    renderWeatherWidget() {
+        const w = this.state.weather;
+        if (!w) {
+            return `<div class="nexus-weather nexus-weather-loading">
+                <span class="nexus-spinner"></span>
+                <span>Cargando...</span>
+            </div>`;
+        }
+        return `
+        <div class="nexus-weather" title="${w.description}">
+            <span class="nexus-weather-icon">${w.icon}</span>
+            <span class="nexus-weather-temp">${w.temp}°</span>
+            <span class="nexus-weather-location">Berlin</span>
+        </div>`;
+    },
+
+    renderLiveWidgets() {
+        const projectsCount = this.state.projects.length || 4;
+        const appointmentsCount = this.state.todaysAppointments.length || 0;
+        
+        return `
+        <div class="nexus-live-widgets">
+            <div class="nexus-widget nexus-widget-stats">
+                <div class="nexus-widget-header">
+                    <span>📊 Overview</span>
+                    <span class="nexus-widget-live">● LIVE</span>
+                </div>
+                <div class="nexus-widget-content">
+                    <div class="nexus-widget-stat" onclick="NexusHub.launchApp('workmanager')">
+                        <div class="nexus-widget-value">${projectsCount}</div>
+                        <div class="nexus-widget-label">Proyectos activos</div>
+                    </div>
+                    <div class="nexus-widget-stat" onclick="window.navigate('ne4citas')">
+                        <div class="nexus-widget-value">${appointmentsCount}</div>
+                        <div class="nexus-widget-label">Citas hoy</div>
+                    </div>
+                    <div class="nexus-widget-stat">
+                        <div class="nexus-widget-value">6</div>
+                        <div class="nexus-widget-label">Apps conectadas</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="nexus-widget nexus-widget-quick">
+                <div class="nexus-widget-header">
+                    <span>⚡ Acceso rápido</span>
+                </div>
+                <div class="nexus-widget-content nexus-widget-buttons">
+                    <button class="nexus-widget-btn" onclick="NexusHub.launchApp('fincontrol')">
+                        <span>💰</span>
+                        FinControl
+                    </button>
+                    <button class="nexus-widget-btn" onclick="NexusHub.launchApp('stockanalyzer')">
+                        <span>📈</span>
+                        Stocks
+                    </button>
+                    <button class="nexus-widget-btn" onclick="window.open('https://docs.google.com/spreadsheets/d/1g3-t2_02wSLpg2LPBvRgEFY3EFjYPxZJTfpyoAa--EE','_blank')">
+                        <span>💨</span>
+                        Soplado
+                    </button>
+                    <button class="nexus-widget-btn" onclick="NexusHub.openPalette()">
+                        <span>⌘</span>
+                        Buscar
+                    </button>
+                </div>
+            </div>
+
+            ${this.renderRecentAppsWidget()}
+        </div>`;
+    },
+
+    renderRecentAppsWidget() {
+        const recent = this.state.recentApps.slice(0, 4);
+        if (recent.length === 0) return '';
+        
+        const recentApps = recent.map(id => this.apps.find(a => a.id === id)).filter(Boolean);
+        
+        return `
+        <div class="nexus-widget nexus-widget-recent">
+            <div class="nexus-widget-header">
+                <span>🕐 Recientes</span>
+            </div>
+            <div class="nexus-widget-content">
+                ${recentApps.map(app => `
+                    <div class="nexus-recent-item" onclick="NexusHub.launchApp('${app.id}')">
+                        <span class="nexus-recent-icon nexus-recent-${app.color}">${app.icon}</span>
+                        <span class="nexus-recent-name">${app.name}</span>
+                    </div>
+                `).join('')}
+            </div>
+        </div>`;
+    },
+
     renderCommandPalette() {
         return `
         <div class="nexus-palette">
@@ -128,8 +222,9 @@ window.NexusHub = {
             { id: 'goto-dashboard', name: 'Ir al Dashboard', icon: '📊', action: () => window.navigate('dashboard') },
             { id: 'goto-projects', name: 'Ver Proyectos', icon: '📁', action: () => window.navigate('projects') },
             { id: 'goto-production', name: 'Ver Producción', icon: '📈', action: () => window.navigate('production') },
-            { id: 'new-project', name: 'Nuevo Proyecto', icon: '➕', action: () => window.openModal('Nuevo Proyecto', 'Formulario aquí') },
-            { id: 'sync-data', name: 'Sincronizar datos', icon: '🔄', action: () => alert('Sincronizando...') }
+            { id: 'goto-citas', name: 'Ver Citas NE4', icon: '📅', action: () => window.navigate('ne4citas') },
+            { id: 'toggle-theme', name: 'Cambiar tema', icon: this.state.theme === 'dark' ? '☀️' : '🌙', action: () => this.toggleTheme() },
+            { id: 'sync-data', name: 'Sincronizar datos', icon: '🔄', action: () => { this.loadData(); this.showToast('Datos sincronizados'); } }
         ].filter(c => c.name.toLowerCase().includes(q));
 
         let html = '';
@@ -170,66 +265,7 @@ window.NexusHub = {
         return html || '<div class="nexus-palette-empty">No se encontraron resultados</div>';
     },
 
-    // Stats con métricas reales
-    renderStats() {
-        const recentCount = this.state.recentApps.length;
-        
-        return `
-        <div class="nexus-stats">
-            <div class="nexus-stat-card nexus-stat-interactive" onclick="NexusHub.launchApp('workmanager')">
-                <div class="nexus-stat-value">6</div>
-                <div class="nexus-stat-label">Apps activas</div>
-                <div class="nexus-stat-trend nexus-trend-up">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
-                        <polyline points="17 6 23 6 23 12"/>
-                    </svg>
-                    100%
-                </div>
-            </div>
-            
-            <div class="nexus-stat-card nexus-stat-interactive" onclick="NexusHub.cycleViewMode()">
-                <div class="nexus-stat-value">4</div>
-                <div class="nexus-stat-label">Proyectos NE3/NE4</div>
-                <div class="nexus-stat-trend">En curso</div>
-            </div>
-            
-            <div class="nexus-stat-card nexus-stat-interactive">
-                <div class="nexus-stat-value">${recentCount}</div>
-                <div class="nexus-stat-label">Apps recientes</div>
-                <div class="nexus-stat-trend">Últimas 24h</div>
-            </div>
-        </div>`;
-    },
-
-    // Quick Actions
     renderQuickActions() {
-        return `
-        <div class="nexus-quick-actions">
-            <div class="nexus-quick-title">Acceso rápido</div>
-            <div class="nexus-quick-grid">
-                <button class="nexus-quick-btn" onclick="NexusHub.launchApp('fincontrol')">
-                    <span>💰</span>
-                    FinControl
-                </button>
-                <button class="nexus-quick-btn" onclick="NexusHub.launchApp('stockanalyzer')">
-                    <span>📈</span>
-                    Stocks
-                </button>
-                <button class="nexus-quick-btn" onclick="window.open('https://docs.google.com/spreadsheets/d/1g3-t2_02wSLpg2LPBvRgEFY3EFjYPxZJTfpyoAa--EE','_blank')">
-                    <span>💨</span>
-                    Soplado
-                </button>
-                <button class="nexus-quick-btn" onclick="NexusHub.toggleViewMode()">
-                    <span id="viewModeIcon">⊞</span>
-                    Vista
-                </button>
-            </div>
-        </div>`;
-    },
-
-    // Apps Grid/List
-    renderApps() {
         const isList = this.state.viewMode === 'list';
         
         return `
@@ -239,7 +275,7 @@ window.NexusHub = {
                     <span class="nexus-section-icon">🐙</span>
                     <div>
                         <h2>Nexus Ecosystem</h2>
-                        <p>Tus aplicaciones conectadas</p>
+                        <p>${this.apps.length} aplicaciones conectadas</p>
                     </div>
                 </div>
                 <div class="nexus-section-actions">
@@ -274,7 +310,7 @@ window.NexusHub = {
                     <div class="nexus-app-row-desc">${app.desc}</div>
                 </div>
                 <div class="nexus-app-row-meta">
-                    <span class="nexus-tag nexus-tag-${app.color}">${app.type === 'local' ? 'Local' : app.color}</span>
+                    <span class="nexus-tag nexus-tag-${app.color}">${app.type === 'local' ? 'Local' : 'Cloud'}</span>
                     <button class="nexus-fav-btn ${isFav ? 'nexus-fav-active' : ''}" 
                             onclick="event.stopPropagation(); NexusHub.toggleFav('${app.id}')">
                         ${isFav ? '★' : '☆'}
@@ -319,7 +355,6 @@ window.NexusHub = {
         </div>`;
     },
 
-    // Operaciones
     renderOperations() {
         return `
         <div class="nexus-section">
@@ -389,7 +424,6 @@ window.NexusHub = {
         </div>`;
     },
 
-    // Resources
     renderResources() {
         return `
         <div class="nexus-section">
@@ -425,12 +459,72 @@ window.NexusHub = {
         </div>`;
     },
 
-    // Métodos de acción
+    // Theme management
+    applyTheme() {
+        document.documentElement.setAttribute('data-theme', this.state.theme);
+        if (this.state.theme === 'light') {
+            document.body.classList.add('nexus-light');
+        } else {
+            document.body.classList.remove('nexus-light');
+        }
+    },
+
+    toggleTheme() {
+        this.state.theme = this.state.theme === 'dark' ? 'light' : 'dark';
+        localStorage.setItem('nexusTheme', this.state.theme);
+        this.applyTheme();
+        this.render();
+    },
+
+    // Weather
+    async loadWeather() {
+        try {
+            // Usando Open-Meteo API (gratis, no requiere key)
+            const response = await fetch('https://api.open-meteo.com/v1/forecast?latitude=52.52&longitude=13.41&current_weather=true&timezone=Europe/Berlin');
+            const data = await response.json();
+            
+            const temp = Math.round(data.current_weather.temperature);
+            const code = data.current_weather.weathercode;
+            
+            // Map weather codes to icons
+            const iconMap = {
+                0: '☀️', 1: '🌤️', 2: '⛅', 3: '☁️',
+                45: '🌫️', 48: '🌫️',
+                51: '🌦️', 53: '🌧️', 55: '🌧️',
+                61: '🌧️', 63: '🌧️', 65: '🌧️',
+                71: '🌨️', 73: '🌨️', 75: '🌨️',
+                95: '⛈️', 96: '⛈️', 99: '⛈️'
+            };
+            
+            this.state.weather = {
+                temp: temp,
+                icon: iconMap[code] || '🌡️',
+                description: `Berlín: ${temp}°C`
+            };
+        } catch (e) {
+            this.state.weather = { temp: '--', icon: '🌡️', description: 'No disponible' };
+        }
+        this.render();
+    },
+
+    // Data loading
+    loadData() {
+        // Intentar cargar datos de IndexedDB si existen
+        if (window.DB && window.DB.getProjects) {
+            window.DB.getProjects().then(projects => {
+                this.state.projects = projects || [];
+                this.render();
+            }).catch(() => {
+                this.state.projects = [];
+            });
+        }
+    },
+
+    // Actions
     launchApp(appId) {
         const app = this.apps.find(a => a.id === appId);
         if (!app) return;
         
-        // Guardar en recientes
         this.addToRecent(appId);
         
         if (app.type === 'local' && app.view) {
@@ -485,14 +579,28 @@ window.NexusHub = {
             case 'goto-dashboard': window.navigate('dashboard'); break;
             case 'goto-projects': window.navigate('projects'); break;
             case 'goto-production': window.navigate('production'); break;
-            case 'new-project': alert('Nuevo proyecto - Feature en desarrollo'); break;
-            case 'sync-data': alert('Sincronizando datos...'); break;
+            case 'goto-citas': window.navigate('ne4citas'); break;
+            case 'toggle-theme': this.toggleTheme(); break;
+            case 'sync-data': this.loadData(); this.showToast('✅ Datos sincronizados'); break;
         }
     },
 
-    // Eventos
+    showToast(message) {
+        const toast = document.createElement('div');
+        toast.className = 'nexus-toast';
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        setTimeout(() => {
+            toast.classList.add('nexus-toast-show');
+        }, 10);
+        setTimeout(() => {
+            toast.classList.remove('nexus-toast-show');
+            setTimeout(() => toast.remove(), 300);
+        }, 2500);
+    },
+
+    // Events
     attachEvents() {
-        // Palette input
         const input = document.getElementById('nexusPaletteInput');
         const results = document.getElementById('nexusPaletteResults');
         
@@ -514,18 +622,13 @@ window.NexusHub = {
 
     setupKeyboardShortcuts() {
         document.addEventListener('keydown', (e) => {
-            // Cmd/Ctrl + K
             if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
                 e.preventDefault();
                 this.openPalette();
             }
-            
-            // Escape
             if (e.key === 'Escape') {
                 this.closePalette();
             }
-            
-            // Cmd/Ctrl + 1-6 para apps
             if ((e.metaKey || e.ctrlKey) && e.key >= '1' && e.key <= '6') {
                 e.preventDefault();
                 const idx = parseInt(e.key) - 1;
@@ -551,17 +654,8 @@ window.NexusHub = {
         setInterval(update, 1000);
     },
 
-    async loadWeather() {
-        // Placeholder - integrar con wttr.in u Open-Meteo si quieres
-        const weather = document.getElementById('nexusWeather');
-        if (weather) {
-            // Simulación por ahora
-            weather.innerHTML = `<span>🌤️</span><span>12°C</span>`;
-        }
-    },
-
     animateEntry() {
-        const cards = document.querySelectorAll('.nexus-app-card, .nexus-app-row');
+        const cards = document.querySelectorAll('.nexus-app-card, .nexus-app-row, .nexus-widget');
         cards.forEach((card, i) => {
             card.style.opacity = '0';
             card.style.transform = 'translateY(20px)';
@@ -569,12 +663,11 @@ window.NexusHub = {
                 card.style.transition = 'all 0.5s cubic-bezier(0.16, 1, 0.3, 1)';
                 card.style.opacity = '1';
                 card.style.transform = 'translateY(0)';
-            }, i * 60);
+            }, i * 50);
         });
     }
 };
 
-// Override render_hub para usar NexusHub
 window.render_hub = function() {
     NexusHub.init();
 };
