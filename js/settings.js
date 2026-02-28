@@ -16,6 +16,7 @@ window.render_settings = async function() {
             <button class="tab active" onclick="window.switchSettingsTab('projects', this)">Proyectos</button>
             <button class="tab" onclick="window.switchSettingsTab('prices', this)">Lista de precios</button>
             <button class="tab" onclick="window.switchSettingsTab('data', this)">Datos</button>
+            <button class="tab" onclick="window.switchSettingsTab('credentials', this)">Credenciales</button>
         </div>
 
         <div id="settingsContent"></div>
@@ -89,6 +90,22 @@ window.renderSettingsContent = async function() {
                 Para modificar precios, edita <code>data/prices.js</code>
             </div>
         `;
+    } else if (window._settingsTab === 'credentials') {
+        document.getElementById('settingsContent').innerHTML = `
+            <div class="card" style="padding:1.5rem;">
+                <h3 style="margin-bottom:1rem;color:#e5e5ea;">🔐 Credenciales GFP (imasm)</h3>
+                <p style="color:#8e8e93;font-size:13px;margin-bottom:1rem;">Se guardan solo en tu navegador (localStorage).</p>
+                <div style="display:flex;flex-direction:column;gap:0.75rem;max-width:320px;">
+                    <input id="gfpUser" type="text" placeholder="Usuario" value="${localStorage.getItem('gfp_usuario')||''}" 
+                        style="padding:10px;background:#111;border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#e5e5ea;font-size:14px;">
+                    <input id="gfpPass" type="password" placeholder="Contraseña" value="${localStorage.getItem('gfp_password')||''}"
+                        style="padding:10px;background:#111;border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#e5e5ea;font-size:14px;">
+                    <button onclick="window.saveGfpCreds()" 
+                        style="padding:10px;background:#30d158;color:#000;border:none;border-radius:8px;font-weight:600;cursor:pointer;">
+                        Guardar
+                    </button>
+                </div>
+            </div>`;
     } else if (window._settingsTab === 'data') {
         const recordCount = await DB.count('records');
         const clientCount = await DB.count('clients');
@@ -227,4 +244,16 @@ window.resetAllData = async function() {
     }
     window.toast('Datos borrados', 'info');
     window.renderSettingsContent();
+};
+
+window.saveGfpCreds = function() {
+    const u = document.getElementById('gfpUser').value.trim();
+    const p = document.getElementById('gfpPass').value.trim();
+    if (u && p) {
+        localStorage.setItem('gfp_usuario', u);
+        localStorage.setItem('gfp_password', p);
+        alert('✅ Credenciales guardadas');
+    } else {
+        alert('⚠️ Completa ambos campos');
+    }
 };

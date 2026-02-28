@@ -1,7 +1,15 @@
 // GFP Citas — Glasfaser Plus (Insyte imasm) appointment management
 (function() {
     const API_BASE = 'https://api-imasm.insytedeutschland.de';
-    const CREDENTIALS = { usuario: 'UMTELKOMD', password: 'UMTELKOMD_4376' };
+    // Credentials stored in localStorage (set via Settings)
+    const CREDENTIALS = {
+        usuario: localStorage.getItem('gfp_usuario') || '',
+        password: localStorage.getItem('gfp_password') || ''
+    };
+    if (!CREDENTIALS.usuario || !CREDENTIALS.password) {
+        el.innerHTML = '<div style="padding:2rem;text-align:center;color:#8e8e93;"><h3 style="color:#e5e5ea;">⚠️ Credenciales GFP no configuradas</h3><p>Ve a <b>Ajustes</b> para ingresar usuario y contraseña de imasm.</p></div>';
+        return;
+    }
 
     // Token management
     let authToken = null;
