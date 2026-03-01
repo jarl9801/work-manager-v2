@@ -79,7 +79,7 @@
         try {
             // Fetch both: citas.json (calendar source) + Apps Script (assignments)
             const [respJson, respScript] = await Promise.all([
-                fetch('https://jarl9801.github.io/field-report/citas.json?t=' + Date.now()),
+                fetch('https://umtelkomd.github.io/field-report/citas.json?t=' + Date.now()),
                 fetch(SCRIPT_URL + '?action=getLiveCitas&t=' + Date.now()).catch(() => null)
             ]);
             const data = await respJson.json();

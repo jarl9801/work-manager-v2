@@ -26,7 +26,7 @@ window.NexusHub = {
         { id: 'stockanalyzer', name: 'Stock Analyzer', desc: 'Valuación DCF', icon: '📈', color: 'orange', type: 'cloud', url: 'https://jarl9801.github.io/stock-analyzer/' },
         { id: 'nexusweb', name: 'Nexus Website', desc: 'Web corporativa', icon: '🌐', color: 'blue', type: 'cloud', url: 'https://hmr-nexus.com' },
         { id: 'nexusbot', name: 'Nexus Bot', desc: 'Telegram bot AI', icon: '🤖', color: 'purple', type: 'cloud', url: 'https://t.me/HMRNexusBot' },
-        { id: 'fieldreport', name: 'Field Report', desc: 'Gestión de citas', icon: '📋', color: 'teal', type: 'cloud', url: 'https://jarl9801.github.io/field-report/' }
+        { id: 'fieldreport', name: 'Field Report', desc: 'Gestión de citas', icon: '📋', color: 'teal', type: 'cloud', url: 'https://umtelkomd.github.io/field-report/' }
     ],
 
     kanbanColumns: [
@@ -840,7 +840,7 @@ window.NexusHub = {
         const app = this.apps.find(a => a.id === appId);
         if (!app) return;
         this.addToRecent(appId);
-        if (app.type === "local" u0026u0026 app.view) {
+        if (app.type === "local" && app.view) {
             window.navigate(app.view);
         } else if (app.url) {
             window.open(app.url, "_blank", "noopener,noreferrer");

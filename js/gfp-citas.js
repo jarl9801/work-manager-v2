@@ -6,6 +6,7 @@
         usuario: localStorage.getItem('gfp_usuario') || '',
         password: localStorage.getItem('gfp_password') || ''
     };
+    const el = document.getElementById('view-gfpcitas');
     if (!CREDENTIALS.usuario || !CREDENTIALS.password) {
         el.innerHTML = '<div style="padding:2rem;text-align:center;color:#8e8e93;"><h3 style="color:#e5e5ea;">⚠️ Credenciales GFP no configuradas</h3><p>Ve a <b>Ajustes</b> para ingresar usuario y contraseña de imasm.</p></div>';
         return;
