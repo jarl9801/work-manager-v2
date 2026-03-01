@@ -27,7 +27,7 @@ window.NexusHub = {
         { id: 'fieldgfp', name: 'Field Glasfaser+', desc: 'App campo GFP', icon: '🔌', color: 'teal', type: 'cloud', url: 'https://umtelkomd.github.io/field-report/glasfaser.html' },
         { id: 'nexusweb', name: 'Nexus Website', desc: 'Web corporativa', icon: '🌐', color: 'blue', type: 'cloud', url: 'https://hmr-nexus.com' },
         { id: 'nexusbot', name: 'Nexus Bot', desc: 'Telegram bot AI', icon: '🤖', color: 'purple', type: 'cloud', url: 'https://t.me/HMRNexusBot' },
-        { id: 'fieldreport', name: 'Field Report', desc: 'Gestión de citas', icon: '📋', color: 'teal', type: 'cloud', url: 'https://umtelkomd.github.io/field-report/' }
+        { id: 'fieldadmin', name: 'Field Admin', desc: 'Admin citas y equipos', icon: '📋', color: 'orange', type: 'cloud', url: 'https://umtelkomd.github.io/field-report/admin.html' }
     ],
 
     kanbanColumns: [
