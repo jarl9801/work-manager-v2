@@ -32,6 +32,10 @@
         clients: 'Clientes NE4',
         certification: 'Certificación',
         hub: '🔗 Hub de Apps',
+        fieldwc: '🔧 Field WestConnect',
+        fieldgfp: '🔌 Field Glasfaser+',
+        fieldadmin: '📊 Field Admin',
+        fieldreports: '📄 Reportes de Campo',
         settings: 'Ajustes'
     };
 

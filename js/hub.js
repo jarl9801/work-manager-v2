@@ -23,11 +23,11 @@ window.NexusHub = {
     apps: [
         { id: 'workmanager', name: 'Work Manager', desc: 'Control de proyectos fibra', icon: '⚡', color: 'gradient', type: 'local', url: null, view: 'dashboard' },
         { id: 'fincontrol', name: 'FinControl', desc: 'Finanzas y cashflow', icon: '💰', color: 'green', type: 'cloud', url: 'https://umtelkomd-finance.web.app' },
-        { id: 'fieldwc', name: 'Field WestConnect', desc: 'App campo WC', icon: '🔧', color: 'blue', type: 'cloud', url: 'https://umtelkomd.github.io/field-report/westconnect.html' },
-        { id: 'fieldgfp', name: 'Field Glasfaser+', desc: 'App campo GFP', icon: '🔌', color: 'teal', type: 'cloud', url: 'https://umtelkomd.github.io/field-report/glasfaser.html' },
+        { id: 'fieldwc', name: 'Field WestConnect', desc: 'App campo WC', icon: '🔧', color: 'blue', type: 'local', url: null, view: 'fieldwc' },
+        { id: 'fieldgfp', name: 'Field Glasfaser+', desc: 'App campo GFP', icon: '🔌', color: 'teal', type: 'local', url: null, view: 'fieldgfp' },
         { id: 'nexusweb', name: 'Nexus Website', desc: 'Web corporativa', icon: '🌐', color: 'blue', type: 'cloud', url: 'https://hmr-nexus.com' },
         { id: 'nexusbot', name: 'Nexus Bot', desc: 'Telegram bot AI', icon: '🤖', color: 'purple', type: 'cloud', url: 'https://t.me/HMRNexusBot' },
-        { id: 'fieldadmin', name: 'Field Admin', desc: 'Admin citas y equipos', icon: '📋', color: 'orange', type: 'cloud', url: 'https://umtelkomd.github.io/field-report/admin.html' },
+        { id: 'fieldadmin', name: 'Field Admin', desc: 'Admin citas y equipos', icon: '📋', color: 'orange', type: 'local', url: null, view: 'fieldadmin' },
         { id: 'fieldreports', name: 'Reportes de Campo', desc: 'Ver reportes del día', icon: '📄', color: 'teal', type: 'local', url: null, view: 'fieldreports' }
     ],
 
