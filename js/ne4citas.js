@@ -1,8 +1,9 @@
-// NE4 Citas — WestConnect appointment management
+// NE4 Citas — WestConnect appointment management (improved)
 (function() {
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz6YI1Oh-tutU3q5NfPJxDq77QKDMVX6DtM92YZ_GxgKYqm0XXymVCOi08k4SuDteXr/exec';
+    const CITAS_JSON = 'https://umtelkomd.github.io/field-report/citas.json';
 
-    const ADMIN_TEAMS = ['West-001', 'West-002', 'West-003', 'West-004'];
+    const ADMIN_TEAMS = ['West-001', 'West-002', 'West-003', 'West-004', 'Plus-001'];
 
     const STATUS_LABELS = {
         libre: 'Libre', asignada: 'Asignada', capturada: 'Capturada',
@@ -11,202 +12,259 @@
         recitar: 'Recitar', paralizada: 'Paralizada', cancelada: 'Cancelada'
     };
 
-    const STATUS_DONE = ['finalizada_ok', 'finalizada_no_ok', 'cliente_ausente', 'recitar', 'paralizada', 'cancelada'];
-
-    const DAY_NAMES = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
-    const MONTH_NAMES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
-
-    let citasCache = {};
-    let allCitasData = [];
-
-    function fmtDate(d) {
-        const dt = new Date(d + 'T12:00:00');
-        return `${DAY_NAMES[dt.getDay()]} ${dt.getDate()} ${MONTH_NAMES[dt.getMonth()]}`;
-    }
-
-    function statusBadgeClass(status) {
-        if (STATUS_DONE.includes(status)) return 'badge-cita-done';
-        return 'badge-cita-' + status;
-    }
-
-    window.render_ne4citas = function() {
-        const container = document.getElementById('view-ne4citas');
-        container.innerHTML = `
-            <div class="section-header">
-                <div>
-                    <div class="section-title">Citas NE4</div>
-                    <div class="section-sub">Gestión de visitas WestConnect</div>
-                </div>
-            </div>
-
-            <div class="kpi-grid" id="citasKpiGrid">
-                <div class="kpi-card"><div class="kpi-label">Total Citas</div><div class="kpi-value" id="ckTotal">—</div></div>
-                <div class="kpi-card"><div class="kpi-label">Asignadas</div><div class="kpi-value blue" id="ckAssigned">—</div></div>
-                <div class="kpi-card"><div class="kpi-label">Pendientes</div><div class="kpi-value orange" id="ckPending">—</div></div>
-                <div class="kpi-card"><div class="kpi-label">Finalizadas</div><div class="kpi-value green" id="ckCompleted">—</div></div>
-            </div>
-
-            <div style="display:flex;gap:12px;align-items:center;margin-bottom:20px;flex-wrap:wrap;">
-                <input type="date" id="citasDateFilter" class="form-input" style="width:auto;padding:8px 14px;">
-                <select id="citasTeamFilter" class="form-select" style="width:auto;padding:8px 14px;">
-                    <option value="">Todos los equipos</option>
-                    ${ADMIN_TEAMS.map(t => `<option value="${t}">${t}</option>`).join('')}
-                </select>
-                <button class="btn btn-primary btn-sm" onclick="window.loadNe4Citas()">🔄 Cargar</button>
-                <button class="btn btn-secondary btn-sm" onclick="document.getElementById('citasDateFilter').value='';window.loadNe4Citas()">📋 Todas</button>
-                <span id="citasStatusMsg" style="font-size:12px;color:var(--text-secondary);"></span>
-            </div>
-
-            <div id="citasLoading" style="text-align:center;padding:40px;color:var(--text-secondary);">
-                Carga las citas para comenzar
-            </div>
-            <div id="citasGrid"></div>
-        `;
-
-        window.loadNe4Citas();
+    const STATUS_COLORS = {
+        libre: 'var(--text-secondary)', asignada: 'var(--blue)', capturada: 'var(--orange)',
+        en_trabajo: 'var(--green)', finalizada_ok: 'var(--green)', finalizada_no_ok: 'var(--red)',
+        cliente_ausente: 'var(--orange)', recitar: 'var(--purple)', paralizada: 'var(--text-secondary)', cancelada: 'var(--red)'
     };
 
-    window.loadNe4Citas = async function() {
-        const loading = document.getElementById('citasLoading');
-        const grid = document.getElementById('citasGrid');
-        const dateFilter = document.getElementById('citasDateFilter').value || '';
-        const teamFilter = document.getElementById('citasTeamFilter').value || '';
+    const STATUS_DONE = ['finalizada_ok', 'finalizada_no_ok', 'cliente_ausente', 'recitar', 'paralizada', 'cancelada'];
 
-        loading.style.display = 'block';
-        loading.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;gap:8px;"><div class="cita-spinner"></div> Cargando citas…</div>';
-        grid.innerHTML = '';
+    const DAY_NAMES_DE = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
+    const DAY_NAMES_ES = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+
+    let allCitas = [];
+    let citasCache = {};
+
+    function getISOWeek(d) {
+        const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+        const day = date.getUTCDay() || 7;
+        date.setUTCDate(date.getUTCDate() + 4 - day);
+        const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+        return Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
+    }
+
+    function kwFromDateStr(str) {
+        if (!str) return '—';
+        const d = new Date(str + 'T12:00:00');
+        return 'KW' + String(getISOWeek(d)).padStart(2, '0');
+    }
+
+    function fmtDate(str) {
+        const d = new Date(str + 'T12:00:00');
+        return `${DAY_NAMES_DE[d.getDay()]} ${d.getDate()}.${String(d.getMonth()+1).padStart(2,'0')}`;
+    }
+
+    function fmtDateFull(str) {
+        const d = new Date(str + 'T12:00:00');
+        return `${DAY_NAMES_ES[d.getDay()]} ${d.getDate()}.${String(d.getMonth()+1).padStart(2,'0')}.${d.getFullYear()}`;
+    }
+
+    function statusBadge(status) {
+        const color = STATUS_COLORS[status] || 'var(--text-secondary)';
+        const label = STATUS_LABELS[status] || status;
+        return `<span style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;background:${color}20;color:${color};text-transform:uppercase;letter-spacing:0.3px;">${label}</span>`;
+    }
+
+    window.render_ne4citas = async function() {
+        const container = document.getElementById('view-ne4citas');
+        container.innerHTML = `<div style="text-align:center;padding:60px;color:var(--text-secondary);"><div style="font-size:24px;margin-bottom:8px;">⏳</div>Cargando citas WestConnect…</div>`;
 
         try {
-            // Fetch both: citas.json (calendar source) + Apps Script (assignments)
-            const [respJson, respScript] = await Promise.all([
-                fetch('https://umtelkomd.github.io/field-report/citas.json?t=' + Date.now()),
-                fetch(SCRIPT_URL + '?action=getLiveCitas&t=' + Date.now()).catch(() => null)
-            ]);
-            const data = await respJson.json();
-
-            // citas.json already includes assignment data (merged by sync cron)
-            // No extra fetch needed — data is ready to use
-
-            const today = new Date().toISOString().split('T')[0];
-            allCitasData = (data.citas || []).filter(c => c.fecha >= today && !STATUS_DONE.includes(c.status));
+            const resp = await fetch(CITAS_JSON + '?t=' + Date.now());
+            const data = await resp.json();
+            allCitas = data.citas || [];
             citasCache = {};
-            allCitasData.forEach(c => { citasCache[c.id] = c; });
+            allCitas.forEach(c => { citasCache[c.id] = c; });
 
-            let citas = allCitasData;
-            if (dateFilter) citas = citas.filter(c => c.fecha === dateFilter);
-            if (teamFilter) citas = citas.filter(c => c.equipo === teamFilter);
-
-            // Update KPIs
-            const total = allCitasData.length;
-            const assigned = allCitasData.filter(c => c.status === 'asignada' || c.status === 'capturada' || c.status === 'en_trabajo').length;
-            const pending = allCitasData.filter(c => c.status === 'libre').length;
-            const completed = allCitasData.filter(c => STATUS_DONE.includes(c.status)).length;
-
-            document.getElementById('ckTotal').textContent = total;
-            document.getElementById('ckAssigned').textContent = assigned;
-            document.getElementById('ckPending').textContent = pending;
-            document.getElementById('ckCompleted').textContent = completed;
-
-            loading.style.display = 'none';
-
-            if (citas.length === 0) {
-                grid.innerHTML = `<div class="empty-state"><div class="icon">📭</div><div class="title">Sin citas</div><div class="desc">${dateFilter ? 'No hay citas para esta fecha' : 'No hay citas próximas'}</div></div>`;
-                return;
-            }
-
-            const teamOptions = (cita) => ADMIN_TEAMS
-                .filter(t => !cita.equipo || t !== cita.equipo)
-                .map(t => `<option value="${t}">${t}</option>`).join('');
-
-            // Group by date
-            const byDate = {};
-            citas.forEach(c => { if (!byDate[c.fecha]) byDate[c.fecha] = []; byDate[c.fecha].push(c); });
-
-            grid.innerHTML = Object.keys(byDate).sort().map(fecha => `
-                <div style="margin-bottom:28px;">
-                    <div class="cita-date-header">
-                        📅 ${fmtDate(fecha)} <span style="color:var(--text-secondary);font-weight:400;font-size:12px;">(${byDate[fecha].length} cita${byDate[fecha].length > 1 ? 's' : ''})</span>
-                    </div>
-                    ${byDate[fecha].map(c => renderCitaCard(c, teamOptions(c))).join('')}
-                </div>
-            `).join('');
-
-            document.getElementById('citasStatusMsg').textContent = `✅ ${citas.length} citas · ${data.generated ? data.generated.substring(0, 16) : ''}`;
-
-            // Cross-reference with today's field reports
-            if (window.FieldReports) {
-                const today = new Date().toISOString().split('T')[0];
-                window.FieldReports.fetchReports(today).then(() => {
-                    allCitasData.forEach(c => {
-                        if (!c.ha) return;
-                        const reports = window.FieldReports.getReportsForHA(c.ha);
-                        if (reports.length === 0) return;
-                        const cardEl = document.getElementById('cita-' + c.id);
-                        if (!cardEl) return;
-                        // Add indicator if not already present
-                        if (!cardEl.querySelector('.fr-reported-dot')) {
-                            const dot = document.createElement('span');
-                            dot.className = 'fr-reported-dot';
-                            dot.title = 'Reporte enviado: ' + (reports[0].statusLabel || reports[0].workStatus || '');
-                            dot.style.cssText = 'display:inline-block;width:8px;height:8px;border-radius:50%;background:#22c55e;margin-left:6px;vertical-align:middle;';
-                            const haEl = cardEl.querySelector('span[style*="font-size:17px"]');
-                            if (haEl) haEl.appendChild(dot);
-                        }
-                    });
-                }).catch(() => {});
-            }
-
+            renderCitasView(data.generated);
         } catch (err) {
-            loading.style.display = 'none';
-            grid.innerHTML = `<div class="empty-state"><div class="icon">⚠️</div><div class="title">Error</div><div class="desc">${err.message}</div></div>`;
+            container.innerHTML = `<div class="empty-state"><div class="icon">⚠️</div><div class="title">Error al cargar</div><div class="sub">${err.message}</div><button class="btn btn-primary" onclick="window.render_ne4citas()" style="margin-top:12px;">🔄 Reintentar</button></div>`;
         }
     };
 
-    function renderCitaCard(c, teamOptions) {
+    function renderCitasView(generated) {
+        const container = document.getElementById('view-ne4citas');
+        const today = new Date().toISOString().split('T')[0];
+        const nowKW = 'KW' + String(getISOWeek(new Date())).padStart(2, '0');
+
+        // Stats
+        const total = allCitas.length;
+        const libre = allCitas.filter(c => c.status === 'libre').length;
+        const asignada = allCitas.filter(c => ['asignada', 'capturada', 'en_trabajo'].includes(c.status)).length;
+        const done = allCitas.filter(c => STATUS_DONE.includes(c.status)).length;
+        const todayCitas = allCitas.filter(c => c.fecha === today).length;
+
+        // Get unique KWs
+        const kws = [...new Set(allCitas.map(c => kwFromDateStr(c.fecha)).filter(k => k !== '—'))].sort();
+
+        // Team workload
+        const teamLoad = {};
+        ADMIN_TEAMS.forEach(t => { teamLoad[t] = { total: 0, today: 0, pending: 0 }; });
+        allCitas.forEach(c => {
+            if (c.equipo && teamLoad[c.equipo]) {
+                teamLoad[c.equipo].total++;
+                if (c.fecha === today) teamLoad[c.equipo].today++;
+                if (!STATUS_DONE.includes(c.status)) teamLoad[c.equipo].pending++;
+            }
+        });
+
+        const genStr = generated ? new Date(generated).toLocaleString('es-ES', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '—';
+
+        container.innerHTML = `
+            <div class="section-header">
+                <div>
+                    <div class="section-title">Citas NE4 — WestConnect</div>
+                    <div class="section-sub">Última sync: ${genStr}</div>
+                </div>
+                <button class="btn btn-primary btn-sm" onclick="window.render_ne4citas()">🔄 Actualizar</button>
+            </div>
+
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <div class="kpi-label">Total</div>
+                    <div class="kpi-value blue">${total}</div>
+                    <div class="kpi-sub">${kws.length} semanas</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Hoy</div>
+                    <div class="kpi-value ${todayCitas > 0 ? 'green' : ''}">${todayCitas}</div>
+                    <div class="kpi-sub">${fmtDate(today)}</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Libres</div>
+                    <div class="kpi-value orange">${libre}</div>
+                    <div class="kpi-sub">sin asignar</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Asignadas</div>
+                    <div class="kpi-value blue">${asignada}</div>
+                    <div class="kpi-sub">en proceso</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Finalizadas</div>
+                    <div class="kpi-value green">${done}</div>
+                    <div class="kpi-sub">completadas</div>
+                </div>
+            </div>
+
+            <!-- Team workload -->
+            <div style="margin-bottom:20px;">
+                <div style="font-size:14px;font-weight:700;margin-bottom:10px;">👥 Carga por equipo</div>
+                <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                    ${ADMIN_TEAMS.map(t => {
+                        const tl = teamLoad[t];
+                        return `<div style="flex:1;min-width:120px;background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:12px;text-align:center;">
+                            <div style="font-size:13px;font-weight:700;margin-bottom:4px;">${t}</div>
+                            <div style="font-size:20px;font-weight:800;color:var(--blue);">${tl.total}</div>
+                            <div style="font-size:11px;color:var(--text-secondary);">${tl.today} hoy · ${tl.pending} pend.</div>
+                        </div>`;
+                    }).join('')}
+                </div>
+            </div>
+
+            <!-- Filters -->
+            <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center;">
+                <select id="citasKWFilter" onchange="window.filterNe4Citas()" style="padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--bg-tertiary);color:var(--text-primary);font-size:13px;min-height:44px;">
+                    <option value="">Todas las semanas</option>
+                    ${kws.map(k => `<option value="${k}" ${k === nowKW ? 'selected' : ''}>${k}</option>`).join('')}
+                </select>
+                <select id="citasTeamFilter" onchange="window.filterNe4Citas()" style="padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--bg-tertiary);color:var(--text-primary);font-size:13px;min-height:44px;">
+                    <option value="">Todos los equipos</option>
+                    ${ADMIN_TEAMS.map(t => `<option value="${t}">${t}</option>`).join('')}
+                </select>
+                <select id="citasStatusFilter" onchange="window.filterNe4Citas()" style="padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--bg-tertiary);color:var(--text-primary);font-size:13px;min-height:44px;">
+                    <option value="">Todos los estados</option>
+                    <option value="libre">🔘 Libres</option>
+                    <option value="asignada">🔵 Asignadas</option>
+                    <option value="en_trabajo">🟢 En trabajo</option>
+                    <option value="done">✅ Finalizadas</option>
+                </select>
+            </div>
+
+            <div id="citasGrid"></div>
+        `;
+
+        window.filterNe4Citas();
+    }
+
+    window.filterNe4Citas = function() {
+        const kwFilter = document.getElementById('citasKWFilter')?.value || '';
+        const teamFilter = document.getElementById('citasTeamFilter')?.value || '';
+        const statusFilter = document.getElementById('citasStatusFilter')?.value || '';
+
+        let citas = allCitas;
+        if (kwFilter) citas = citas.filter(c => kwFromDateStr(c.fecha) === kwFilter);
+        if (teamFilter) citas = citas.filter(c => c.equipo === teamFilter);
+        if (statusFilter === 'done') citas = citas.filter(c => STATUS_DONE.includes(c.status));
+        else if (statusFilter) citas = citas.filter(c => c.status === statusFilter);
+
+        const grid = document.getElementById('citasGrid');
+        if (!grid) return;
+
+        if (citas.length === 0) {
+            grid.innerHTML = `<div class="empty-state"><div class="icon">📭</div><div class="title">Sin citas</div><div class="sub">No hay citas para estos filtros</div></div>`;
+            return;
+        }
+
+        // Group by date
+        const byDate = {};
+        citas.forEach(c => { if (!byDate[c.fecha]) byDate[c.fecha] = []; byDate[c.fecha].push(c); });
+
+        grid.innerHTML = Object.keys(byDate).sort().map(fecha => {
+            const dayCitas = byDate[fecha];
+            const kw = kwFromDateStr(fecha);
+            const doneCount = dayCitas.filter(c => STATUS_DONE.includes(c.status)).length;
+            const freeCount = dayCitas.filter(c => c.status === 'libre').length;
+
+            return `
+            <div style="margin-bottom:24px;">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border);">
+                    <span style="font-size:16px;font-weight:700;">${fmtDateFull(fecha)}</span>
+                    <span style="font-size:11px;padding:3px 8px;border-radius:6px;background:var(--blue);color:white;font-weight:600;">${kw}</span>
+                    <span style="font-size:12px;color:var(--text-secondary);">${dayCitas.length} cita${dayCitas.length > 1 ? 's' : ''}${freeCount > 0 ? ` · ${freeCount} libre${freeCount > 1 ? 's' : ''}` : ''}${doneCount > 0 ? ` · ${doneCount} hechas` : ''}</span>
+                </div>
+                ${dayCitas.map(c => renderCitaCard(c)).join('')}
+            </div>`;
+        }).join('');
+    };
+
+    function renderCitaCard(c) {
         const isDone = STATUS_DONE.includes(c.status);
-        const badgeCls = statusBadgeClass(c.status);
-        const badgeLbl = STATUS_LABELS[c.status] || c.status;
-        const selected = c.equipo ? `<option value="${c.equipo}" selected>${c.equipo}</option><option value="">— Cambiar equipo —</option>` : '<option value="">— Equipo —</option>';
         const addr = c.calle ? `${c.calle}, ${c.cp} ${c.ciudad}`.trim() : (c.ciudad || '—');
+        const teamOptions = ADMIN_TEAMS.map(t => `<option value="${t}" ${c.equipo === t ? 'selected' : ''}>${t}</option>`).join('');
 
         return `
-        <div class="cita-card cita-status-${c.status}" id="cita-${c.id}">
-            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+        <div id="cita-${c.id}" style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:10px;${c.status === 'libre' ? 'border-left:4px solid var(--orange);' : c.status === 'en_trabajo' ? 'border-left:4px solid var(--green);' : ['asignada','capturada'].includes(c.status) ? 'border-left:4px solid var(--blue);' : isDone ? 'border-left:4px solid var(--green);opacity:0.7;' : ''}">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:8px;">
                 <div>
-                    <span style="font-size:17px;font-weight:700;">${c.ha || '—'}</span>
-                    <span style="font-size:12px;color:var(--text-secondary);margin-left:8px;">👷 ${c.tecnicos} TK</span>
+                    <span style="font-size:16px;font-weight:700;">${c.ha || c.titulo || '—'}</span>
+                    <span style="font-size:12px;color:var(--text-secondary);margin-left:6px;">👷 ${c.tecnicos || '?'} TK</span>
                 </div>
-                <span class="badge ${badgeCls}">${badgeLbl}</span>
+                ${statusBadge(c.status)}
             </div>
-            <div style="font-size:13px;color:var(--text-secondary);margin:8px 0 4px;">📍 ${addr}</div>
-            <div style="font-size:13px;color:var(--blue);margin-bottom:10px;">🕐 ${c.inicio} – ${c.fin}</div>
+            <div style="font-size:13px;color:var(--text-secondary);margin-bottom:4px;">📍 ${addr}</div>
+            <div style="font-size:13px;color:var(--blue);margin-bottom:${isDone ? '0' : '12'}px;">🕐 ${c.inicio || '?'} – ${c.fin || '?'}</div>
             ${!isDone ? `
-            <div class="cita-assign-row">
-                <select id="cita-team-${c.id}" class="form-select" style="width:auto;flex:1;min-width:100px;padding:7px 10px;font-size:13px;">${selected}${teamOptions}</select>
-                <input id="cita-docs-${c.id}" class="form-input" type="url" placeholder="Link Aushändigung" value="${c.linkDocs || ''}" style="flex:2;min-width:140px;padding:7px 10px;font-size:13px;">
-                <button class="btn btn-sm ${c.equipo ? 'btn-secondary' : 'btn-success'}" onclick="window.assignNe4Cita('${c.id}')">${c.equipo ? '✏️ Actualizar' : '✅ Asignar'}</button>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                <select id="cita-team-${c.id}" style="flex:1;min-width:110px;padding:10px;border-radius:10px;border:1px solid var(--border);background:var(--bg-tertiary);color:var(--text-primary);font-size:13px;min-height:44px;">
+                    <option value="">— Equipo —</option>
+                    ${teamOptions}
+                </select>
+                <input id="cita-docs-${c.id}" type="url" placeholder="📎 Link docs" value="${c.linkDocs || ''}" style="flex:2;min-width:140px;padding:10px;border-radius:10px;border:1px solid var(--border);background:var(--bg-tertiary);color:var(--text-primary);font-size:13px;min-height:44px;">
+                <button onclick="window.assignNe4Cita('${c.id}')" style="background:${c.equipo ? 'var(--bg-tertiary)' : 'var(--green)'};color:${c.equipo ? 'var(--text-primary)' : 'white'};border:${c.equipo ? '1px solid var(--border)' : 'none'};border-radius:10px;padding:10px 16px;font-size:14px;font-weight:600;cursor:pointer;min-height:44px;white-space:nowrap;">${c.equipo ? '✏️ Actualizar' : '✅ Asignar'}</button>
             </div>` : `
-            <div style="font-size:12px;color:var(--text-secondary);">
-                ${c.equipo ? `👥 ${c.equipo}` : ''} ${c.linkDocs ? `· <a href="${c.linkDocs}" target="_blank" style="color:var(--blue);">📎 Docs</a>` : ''}
+            <div style="font-size:12px;color:var(--text-secondary);margin-top:6px;">
+                ${c.equipo ? `👥 ${c.equipo}` : '—'} ${c.linkDocs ? `· <a href="${c.linkDocs}" target="_blank" style="color:var(--blue);">📎 Docs</a>` : ''}
             </div>`}
         </div>`;
     }
 
     window.assignNe4Cita = async function(citaId) {
-        const equipo = document.getElementById(`cita-team-${citaId}`).value;
-        const linkDocs = document.getElementById(`cita-docs-${citaId}`).value;
+        const equipo = document.getElementById(`cita-team-${citaId}`)?.value;
+        const linkDocs = document.getElementById(`cita-docs-${citaId}`)?.value || '';
 
         if (!equipo) { window.toast('Selecciona un equipo', 'error'); return; }
 
         const btn = event.target;
+        const origHTML = btn.innerHTML;
         btn.disabled = true;
-        const origText = btn.textContent;
-        btn.textContent = '⏳';
+        btn.innerHTML = '⏳';
 
         try {
             const cita = citasCache[citaId] || {};
             const params = new URLSearchParams({
-                action: 'assignCita', citaId, equipo, linkDocs: linkDocs || '',
+                action: 'assignCita', citaId, equipo, linkDocs,
                 ha: cita.ha || '', direccion: cita.calle || '', cp: cita.cp || '',
                 ciudad: cita.ciudad || '', inicio: cita.inicio || '', fin: cita.fin || '',
                 tecnicos: cita.tecnicos || '', fecha: cita.fecha || ''
@@ -215,41 +273,31 @@
             const result = await resp.json();
 
             if (result.success) {
-                // Update cache
                 if (citasCache[citaId]) {
                     citasCache[citaId].equipo = equipo;
                     citasCache[citaId].linkDocs = linkDocs;
-                    citasCache[citaId].status = citasCache[citaId].status === 'libre' ? 'asignada' : citasCache[citaId].status;
+                    if (citasCache[citaId].status === 'libre') citasCache[citaId].status = 'asignada';
                 }
-                // Update badge in DOM
-                const cardEl = document.getElementById('cita-' + citaId);
-                if (cardEl) {
-                    const badge = cardEl.querySelector('.badge');
-                    const newStatus = citasCache[citaId] ? citasCache[citaId].status : 'asignada';
-                    if (badge) {
-                        badge.className = 'badge ' + statusBadgeClass(newStatus);
-                        badge.textContent = STATUS_LABELS[newStatus] || newStatus;
-                    }
-                }
-                btn.textContent = '✅';
-                window.toast('Cita asignada a ' + equipo, 'success');
+                btn.innerHTML = '✅';
+                btn.style.background = 'var(--green)';
+                btn.style.color = 'white';
+                btn.style.border = 'none';
+                window.toast(`Asignada a ${equipo} ✓`, 'success');
+                setTimeout(() => { btn.disabled = false; btn.innerHTML = '✏️ Actualizar'; btn.style.background = 'var(--bg-tertiary)'; btn.style.color = 'var(--text-primary)'; btn.style.border = '1px solid var(--border)'; }, 1500);
             } else {
                 throw new Error(result.error || 'Error al asignar');
             }
         } catch (err) {
             btn.disabled = false;
-            btn.textContent = origText;
+            btn.innerHTML = origHTML;
             window.toast('Error: ' + err.message, 'error');
         }
     };
 
-    // Expose citas data for teams view
+    // Expose for other modules
     window.getNe4CitasForTeam = function(teamName) {
         const today = new Date().toISOString().split('T')[0];
-        return allCitasData.filter(c => c.equipo === teamName && c.fecha === today && !STATUS_DONE.includes(c.status));
+        return allCitas.filter(c => c.equipo === teamName && c.fecha === today && !STATUS_DONE.includes(c.status));
     };
-
-    window.getNe4CitasLoaded = function() {
-        return allCitasData.length > 0;
-    };
+    window.getNe4CitasLoaded = () => allCitas.length > 0;
 })();
