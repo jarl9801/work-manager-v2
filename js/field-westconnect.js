@@ -363,8 +363,10 @@
                 <button class="fwc-citas-tab" id="fwcTabHist" onclick="window.fwcSwitchCitasTab('historial')">📁 Historial</button>
             </div>
             <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center;">
-                <input type="date" id="fwcCitasDate" value="${new Date().toISOString().split('T')[0]}" style="flex:1;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--bg-tertiary);color:var(--text-primary);font-size:14px;">
-                <button onclick="window.fwcLoadCitas()" style="background:var(--blue);color:white;border:none;border-radius:8px;padding:10px 16px;cursor:pointer;">🔄</button>
+                <button onclick="window.fwcPrevDay()" style="background:var(--bg-tertiary);color:var(--text-primary);border:1px solid var(--border);border-radius:8px;padding:10px 12px;cursor:pointer;font-size:16px;">◀</button>
+                <input type="date" id="fwcCitasDate" value="${new Date().toISOString().split('T')[0]}" onchange="window.fwcLoadCitasForSelectedDate()" style="flex:1;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--bg-tertiary);color:var(--text-primary);font-size:14px;text-align:center;">
+                <button onclick="window.fwcNextDay()" style="background:var(--bg-tertiary);color:var(--text-primary);border:1px solid var(--border);border-radius:8px;padding:10px 12px;cursor:pointer;font-size:16px;">▶</button>
+                <button onclick="window.fwcLoadCitasForSelectedDate()" style="background:var(--blue);color:white;border:none;border-radius:8px;padding:10px 16px;cursor:pointer;">🔄</button>
             </div>
             <div id="fwcCitasLoading" style="text-align:center;padding:32px;color:var(--text-secondary);">⏳ Cargando citas…</div>
             <div id="fwcCitasEmpty" style="display:none;text-align:center;padding:32px;color:var(--text-secondary);">📭 Sin citas para esta fecha.</div>
@@ -383,6 +385,26 @@
     };
 
     window.fwcLoadCitas = loadCitas;
+    window.fwcLoadCitasForSelectedDate = function() {
+        const dp = document.getElementById('fwcCitasDate');
+        if (dp) loadCitasForDate(dp.value);
+    };
+    window.fwcPrevDay = function() {
+        const dp = document.getElementById('fwcCitasDate');
+        if (!dp) return;
+        const d = new Date(dp.value);
+        d.setDate(d.getDate() - 1);
+        dp.value = d.toISOString().split('T')[0];
+        loadCitasForDate(dp.value);
+    };
+    window.fwcNextDay = function() {
+        const dp = document.getElementById('fwcCitasDate');
+        if (!dp) return;
+        const d = new Date(dp.value);
+        d.setDate(d.getDate() + 1);
+        dp.value = d.toISOString().split('T')[0];
+        loadCitasForDate(dp.value);
+    };
 
     async function loadCitas() {
         const teamName = state.currentTeam.name;
