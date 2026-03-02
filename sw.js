@@ -1,4 +1,4 @@
-const CACHE_NAME = 'wm-v2-cache-v3';
+const CACHE_NAME = 'wm-v2-cache-v4';
 const ASSETS = [
   './',
   './index.html',
@@ -17,6 +17,11 @@ const ASSETS = [
   './js/certification.js',
   './js/settings.js',
   './js/i18n.js',
+  './js/fieldreports.js',
+  './js/photo-utils.js',
+  './js/field-westconnect.js',
+  './js/field-glasfaser.js',
+  './js/field-admin.js',
   './data/projects.js',
   './data/prices.js'
 ];
